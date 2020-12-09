@@ -26,7 +26,8 @@ bool Bank::ReadTransactions(string filename) {
     string line = "";
     while (!inFile.eof()) {
       getline(inFile, line);
-      transaction_list_.push(Transaction(line));
+      Transaction temp(line);
+      transaction_list_.push(temp);
     }
     inFile.close();
   } else {
@@ -42,11 +43,13 @@ void Bank::ProcessTransactions() {
     Process(transaction_list_.front());
     transaction_list_.pop();
   }
-  cout << "Processing Complete." << endl;
-  PrintSummary();
+  cout << "Transaction processing complete." << endl;
 }
 
-void Bank::PrintSummary() const {}
+void Bank::PrintSummary() const {
+  cout << "Final Balances: " << endl;
+  client_accounts_.Display();
+}
 
 bool Bank::AddOneTransaction(Transaction transaction) {
   transaction_list_.push(transaction);
@@ -62,34 +65,37 @@ void Bank::PrintTransactionList() {
   }
 }
 
-bool Bank::Process(Transaction transaction) {
+void Bank::Process(Transaction transaction) {
   char type = transaction.get_type();
+
+  // open account type O
   if (type == 'O') {
-    return true;
+    Open(transaction);
+
   } else if (type == 'D') {
     Deposit(transaction);
-    return true;
+
+  // withdraw type W
   } else if (type == 'W') {
-    if (Withdraw(transaction)) {
-      return true;
-    } else {
-      return false;
-    }
+    Withdraw(transaction);
+
+  // transfer type T
   } else if (type == 'T') {
-    if (Transfer(transaction)) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
+    Transfer(transaction);
+
+  // history type T
+  } else if (type == 'H') {
     PrintHistory(transaction);
-    return true;
+
+  // NOT RECOGNIZED TYPE, FAIL
+  } else {
+    cerr << "Transaction type: '" << type << "' is invalid. Terminate " <<
+      "transaction \"" << transaction << "\"" << endl;
   }
 }
 
-// todo: cout to cerr
 // dynamic memory here
-bool Bank::Open(const Transaction& transaction) {
+void Bank::Open(const Transaction& transaction) {
 
   // open dynamic memory
   Account* open =
@@ -97,23 +103,72 @@ bool Bank::Open(const Transaction& transaction) {
 
   // if fail, delete dynamic memory
   if (client_accounts_.Insert(open)) {
-    return true;
+    return;
   } else {
     delete open;
     open = nullptr;
-    cerr << "Account " << transaction.get_client_id() << " is already open." <<
-      "Transaction refused." << endl;
+    cerr << "ERROR: Account " << transaction.get_client_id() <<
+      " is already open." << " Transaction refused." << endl;
   }
 }
 
-void Bank::Deposit(const Transaction& transaction) {}
+void Bank::Deposit(const Transaction& transaction) {
+  Account* current;
 
-bool Bank::Withdraw(const Transaction& transaction) {
-  return false;
+  // if account not found
+  if (!(client_accounts_.Retrieve(transaction.get_client_id(), current))) {
+    cerr << "ERROR: Account " << transaction.get_client_id() << " not found." <<
+      " Deposit refused." << endl;
+
+  // account found
+  } else {
+    current->ProcessTransaction(transaction, nullptr);
+  }
 }
 
-bool Bank::Transfer(const Transaction& transaction) {
-  return false;
+void Bank::Withdraw(const Transaction& transaction) {
+  Account* current;
+
+  // if account not found
+  if (!(client_accounts_.Retrieve(transaction.get_client_id(), current))) {
+    cerr << "ERROR: Account " << transaction.get_client_id() << " not found." <<
+      " Withdraw refused." << endl;
+
+  // account found
+  } else {
+    current->ProcessTransaction(transaction, nullptr);
+  }
 }
 
-void Bank::PrintHistory(const Transaction& transaction) {}
+void Bank::Transfer(const Transaction& transaction) {
+  Account* from;
+  Account* to;
+
+  // if account not found
+  if (!(client_accounts_.Retrieve(transaction.get_client_id(), from))) {
+    cerr << "ERROR: Account " << transaction.get_client_id() << " not found." <<
+      " Transfer refused." << endl;
+
+  } else if (!(client_accounts_.Retrieve(transaction.get_to_client_id(), to))) {
+    cerr << "ERROR: Account " << transaction.get_to_client_id() << " not found." <<
+      " Transfer refused." << endl;
+
+  // account found
+  } else {
+    from->ProcessTransaction(transaction, to);
+  }
+}
+
+void Bank::PrintHistory(const Transaction& transaction) {
+  Account* current;
+
+  // if account not found
+  if (!(client_accounts_.Retrieve(transaction.get_client_id(), current))) {
+    cerr << "ERROR: Account " << transaction.get_client_id() << " not found." <<
+      " Printing history failed." << endl;
+
+    // account found
+  } else {
+    current->ProcessTransaction(transaction, nullptr);
+  }
+}

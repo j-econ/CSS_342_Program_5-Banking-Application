@@ -39,11 +39,11 @@ class Bank {
   void PrintTransactionList();
 
  private:
-  bool Process(Transaction transaction);
-  bool Open(const Transaction& transaction);
+  void Process(Transaction transaction);
+  void Open(const Transaction& transaction);
   void Deposit(const Transaction& transaction);
-  bool Withdraw(const Transaction& transaction);
-  bool Transfer(const Transaction& transaction);
+  void Withdraw(const Transaction& transaction);
+  void Transfer(const Transaction& transaction);
   void PrintHistory(const Transaction& transaction);
 
   int id_;

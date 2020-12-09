@@ -22,7 +22,7 @@
 using namespace std;
 
 // Testing methods for application classes
-void BankTest();
+void BankTest(string filename);
 void BSTreeTest();
 void AccountTest();
 void FundTest();
@@ -33,23 +33,18 @@ void MoneyTest();
 int main() {
   cout << boolalpha << endl;
 
-  ////cout << "Enter filename with extension: " << endl;
-  //string filename = "";
-  ////cin >> filename;
+  string filename = "";
+  filename = "C:\\Users\\jecon\\source\\repos\\2020_Fall_CSS342B\\CSS_342_Program_5\\CSS_342_Program_5\\BankTransIn.txt";
 
-  //filename = "C:\\Users\\jecon\\source\\repos\\2020_Fall_CSS342B\\CSS_342_Program_5\\CSS_342_Program_5\\BankTransIn.txt";
-
-  //Bank bank_342(342);
-  //bank_342.ReadTransactions(filename);
-
-  //bank_342.PrintTransactionList();
+  Bank bank_342(342);
+  bank_342.ReadTransactions(filename);
+  bank_342.ProcessTransactions();
+  bank_342.PrintSummary();
 
   // Testing methods here
-  BankTest();
+  //BankTest(filename);
   //BSTreeTest();
-  
   //AccountTest();
-  
   //FundTest();
   //TransactionTest();
   //NameTest();
@@ -57,11 +52,16 @@ int main() {
   return 0;
 }
 
-// todo:
-void BankTest() {
+// done
+void BankTest(string filename) {
   cout << "BANK CLASS TESTING BEGIN-----------------------------------" << endl;
   cout << endl;
 
+  Bank bank_342(342);
+  bank_342.ReadTransactions(filename);
+  bank_342.ProcessTransactions();
+  cout << endl;
+  bank_342.PrintSummary();
 
   cout << endl;
   cout << "-------------------------------------BANK CLASS TESTING END" << endl;
@@ -197,27 +197,27 @@ void AccountTest() {
   Transaction cashtrans16("W 10017 20000");
   Transaction cashtrans17("H 1001");
   // depos
-  cash.ProcessTransaction(cashtrans1);
-  cash.ProcessTransaction(cashtrans2);
-  cash.ProcessTransaction(cashtrans3);
-  cash.ProcessTransaction(cashtrans4);
-  cash.ProcessTransaction(cashtrans5);
-  cash.ProcessTransaction(cashtrans6);
-  cash.ProcessTransaction(cashtrans7);
-  cash.ProcessTransaction(cashtrans8);
-  cash.ProcessTransaction(cashtrans9);
-  cash.ProcessTransaction(cashtrans10);
-  cash.ProcessTransaction(cashtrans11);
+  cash.ProcessTransaction(cashtrans1,nullptr);
+  cash.ProcessTransaction(cashtrans2, nullptr);
+  cash.ProcessTransaction(cashtrans3, nullptr);
+  cash.ProcessTransaction(cashtrans4, nullptr);
+  cash.ProcessTransaction(cashtrans5, nullptr);
+  cash.ProcessTransaction(cashtrans6, nullptr);
+  cash.ProcessTransaction(cashtrans7, nullptr);
+  cash.ProcessTransaction(cashtrans8, nullptr);
+  cash.ProcessTransaction(cashtrans9, nullptr);
+  cash.ProcessTransaction(cashtrans10, nullptr);
+  cash.ProcessTransaction(cashtrans11, nullptr);
   // withdraws
-  cash.ProcessTransaction(cashtrans11);
-  cash.ProcessTransaction(cashtrans12);
-  cash.ProcessTransaction(cashtrans13);
-  cash.ProcessTransaction(cashtrans14);
+  cash.ProcessTransaction(cashtrans11, nullptr);
+  cash.ProcessTransaction(cashtrans12, nullptr);
+  cash.ProcessTransaction(cashtrans13, nullptr);
+  cash.ProcessTransaction(cashtrans14, nullptr);
   // transfer
-  cash.ProcessTransaction(cashtrans15);
+  cash.ProcessTransaction(cashtrans15, nullptr);
   // finish
-  cash.ProcessTransaction(cashtrans16);
-  cash.ProcessTransaction(cashtrans17);
+  cash.ProcessTransaction(cashtrans16, nullptr);
+  cash.ProcessTransaction(cashtrans17, nullptr);
 
 
 

@@ -28,6 +28,7 @@ Transaction::Transaction(const Transaction& input)
     : original_transaction_(input.get_original_transaction()),
       type_(input.get_type()),
       client_name_(input.get_client_name()),
+      client_id_(input.get_client_id()),
       fund_id_(input.get_fund_id()),
       to_client_id_(input.get_to_client_id()),
       to_fund_id_(input.get_to_fund_id()),
@@ -120,8 +121,10 @@ void Transaction::SetTransaction() {
   if (type_ == 'O') {
     string last = "";
     string first = "";
-    o_t >> burn >> last >> first >> client_id_;
+    int client_id = 0;
+    o_t >> burn >> last >> first >> client_id;
     client_name_ = Name(first, last);
+    client_id_ = client_id;
 
     // defaults
     fund_id_ = -1;
@@ -163,11 +166,27 @@ void Transaction::SetTransaction() {
 
   // history type
   } else if (type_ == 'H') {
-    o_t >> burn >> client_id_;
+    int client_id = 0;
+    int tester = 0;
+    o_t >> burn >> client_id;
+
+    tester = client_id;
+    int count = 0;
+    while (tester != 0) {
+      tester /= 10;
+      ++count;
+    }
+    if (count == 4) {
+      client_id_ = client_id;
+      fund_id_ = -1;
+    } else {
+      fund_id_ = client_id % 10;
+      client_id /= 10;
+      client_id_ = client_id;
+    }
 
     // defaults
     client_name_ = Name();
-    fund_id_ = -1;
     to_client_id_ = -1;
     to_fund_id_ = -1;
     amount_ = Money();

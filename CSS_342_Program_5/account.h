@@ -35,7 +35,7 @@ class Account {
   bool set_client_name(Name name);
 
   // actions
-  bool ProcessTransaction(const Transaction& transaction);
+  void ProcessTransaction(const Transaction& transaction, Account* to_account);
   void PrintAllFundHistory() const;
 
   // operator overload
@@ -53,7 +53,7 @@ class Account {
   void CreateFunds();
   void Deposit(const Transaction& transaction);
   bool Withdraw(Transaction transaction);
-  bool Transfer(Transaction transaction);
+  bool Transfer(Transaction transaction, Account* to_account);
   void PrintHistory(const Transaction& transaction);
 
   int client_id_;

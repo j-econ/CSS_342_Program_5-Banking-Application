@@ -53,26 +53,37 @@ bool Account::set_client_name(Name name) {
 
 // actions
 
-bool Account::ProcessTransaction(const Transaction& transaction) {
+void Account::ProcessTransaction(
+  const Transaction& transaction, Account* to_account) {
   char type = transaction.get_type();
+
+  //deposit
   if (type == 'D') {
     Deposit(transaction);
-    return true;
+
+    // withdraw
   } else if (type == 'W') {
-    if (Withdraw(transaction)) {
-      return true;
-    } else {
-      return false;
+    if (!(Withdraw(transaction))) {
+      cerr << "ERROR: Not enough funds to withdraw " <<
+        transaction.get_amount() << " from " << client_name_ << " " <<
+        funds_[transaction.get_fund_id()].get_fund_name() << "." << endl;
     }
+
+    // transfer
   } else if (type == 'T') {
-    if (Transfer(transaction)) {
-      return true;
-    } else {
-      return false;
+    if (!(Transfer(transaction, to_account))) {
+      cerr << "ERROR: Not enough funds to transfer " <<
+        transaction.get_amount() << " from " << client_name_ << " " <<
+        funds_[transaction.get_fund_id()].get_fund_name() << "." << endl;
     }
+
+    // print history
   } else {
-    PrintHistory(transaction);
-    return true;
+    if (transaction.get_fund_id() < 0) { // print all
+      PrintAllFundHistory();
+    } else { // print just one fund
+      PrintHistory(transaction);
+    }
   }
 }
 
@@ -108,6 +119,8 @@ void Account::operator=(const Account& rhs) {
   funds_ = rhs.get_funds();
 }
 
+//private
+
 void Account::CreateFunds() {
   funds_.push_back(Fund(0, "Money Market", client_name_));
   funds_.push_back(Fund(1, "Prime Money Market", client_name_));
@@ -127,16 +140,14 @@ void Account::Deposit(const Transaction& transaction) {
 }
 
 bool Account::Withdraw(Transaction transaction) {
-  
-  // non linked withdrawal
-  if ((transaction.get_type() != '0') &&
-      (transaction.get_type() != '1') &&
-      (transaction.get_type() != '2') &&
-      (transaction.get_type() != '3')) {
+  int fund_id = transaction.get_fund_id(); // simplification
+  Money amount = transaction.get_amount();
 
-    // non linked not enough funds
-    if (transaction.get_amount() >
-        funds_[transaction.get_fund_id()].get_amount()) {
+  // non linked withdrawal
+  if ((fund_id != 0) && (fund_id != 1) && (fund_id != 2) && (fund_id != 3)) {
+
+    // non linked not enough
+    if (amount > funds_[fund_id].get_amount()) {
       transaction.set_original_transaction(
         transaction.get_original_transaction() + "(Failed)");
       funds_[transaction.get_fund_id()].StoreTransaction(transaction);
@@ -144,8 +155,8 @@ bool Account::Withdraw(Transaction transaction) {
 
     // non linked enough
     } else {
-      funds_[transaction.get_fund_id()].Withdraw(transaction.get_amount());
-      funds_[transaction.get_fund_id()].StoreTransaction(transaction);
+      funds_[fund_id].Withdraw(transaction.get_amount());
+      funds_[fund_id].StoreTransaction(transaction);
       return true;
     }
 
@@ -153,30 +164,34 @@ bool Account::Withdraw(Transaction transaction) {
   } else {
 
     // linked not enough funds
-    if (transaction.get_amount() >
-        funds_[transaction.get_fund_id()].get_amount()) {
-
-      // linked fund logic
+    if (amount > funds_[fund_id].get_amount()) {
 
       // fund 0
-      if (transaction.get_fund_id() == 0) {
-        if (funds_[0].get_amount() + funds_[1].get_amount() <
-            transaction.get_amount()) { // not enough in both
+      if (fund_id == 0) {
+
+        // not enough in both combined
+        if (funds_[0].get_amount() + funds_[1].get_amount() < amount) {
           transaction.set_original_transaction(
             transaction.get_original_transaction() + "(Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
-        } else { // enough in both, split transaction
+
+          // enough in both combined
+        } else {
+
+          Money remainder = amount - funds_[0].get_amount();
 
           // first transaction
-          string new_transaction_first = "W " + to_string(client_id_) +
-            "0" + " " + to_string((funds_[0].get_amount()).Money::get_amount());
+          string new_transaction_first = "W " +
+            to_string(transaction.get_client_id()) +
+            "0" +
+            " " +
+            to_string( (funds_[0].get_amount()).Money::get_amount());
           Transaction new_first(new_transaction_first);
           funds_[0].Withdraw(new_first.get_amount());
           funds_[0].StoreTransaction(new_first);
 
           // second transaction
-          Money remainder = transaction.get_amount() - funds_[0].get_amount();
           string new_transaction_second = "W " + to_string(client_id_) +
             "1" + " " + to_string(remainder.Money::get_amount());
           Transaction new_second(new_transaction_second);
@@ -186,24 +201,31 @@ bool Account::Withdraw(Transaction transaction) {
         }
 
         // fund 1
-      } else if (transaction.get_fund_id() == 1) {
-        if (funds_[1].get_amount() + funds_[0].get_amount() <
-            transaction.get_amount()) { // not enough in both
+      } else if (fund_id == 1) {
+
+        // not enough in both combined
+        if (funds_[1].get_amount() + funds_[0].get_amount() < amount) {
           transaction.set_original_transaction(
             transaction.get_original_transaction() + "(Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
-        } else { // enough in both
+
+          // enough in both combined
+        } else {
+
+          Money remainder = amount - funds_[1].get_amount();
 
           // first transaction
-          string new_transaction_first = "W " + to_string(client_id_) +
-            "1" + " " + to_string((funds_[1].get_amount()).Money::get_amount());
+          string new_transaction_first = "W " +
+            to_string(transaction.get_client_id()) +
+            "1" +
+            " " +
+            to_string((funds_[1].get_amount()).Money::get_amount());
           Transaction new_first(new_transaction_first);
           funds_[1].Withdraw(new_first.get_amount());
           funds_[1].StoreTransaction(new_first);
 
           // second transaction
-          Money remainder = transaction.get_amount() - funds_[1].get_amount();
           string new_transaction_second = "W " + to_string(client_id_) +
             "0" + " " + to_string(remainder.Money::get_amount());
           Transaction new_second(new_transaction_second);
@@ -213,24 +235,31 @@ bool Account::Withdraw(Transaction transaction) {
         }
 
         // fund 2
-      } else if (transaction.get_fund_id() == 2) {
-        if (funds_[2].get_amount() + funds_[3].get_amount() <
-            transaction.get_amount()) { // not enough in both
+      } else if (fund_id == 2) {
+
+        // not enough in both combined
+        if (funds_[2].get_amount() + funds_[3].get_amount() < amount) {
           transaction.set_original_transaction(
             transaction.get_original_transaction() + "(Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
-        } else { // enough in both
+
+          // enough in both combined
+        } else {
+
+          Money remainder = amount - funds_[2].get_amount();
 
           // first transaction
-          string new_transaction_first = "W " + to_string(client_id_) +
-            "2" + " " + to_string((funds_[2].get_amount()).Money::get_amount());
+          string new_transaction_first = "W " +
+            to_string(transaction.get_client_id()) +
+            "2" +
+            " " +
+            to_string((funds_[2].get_amount()).Money::get_amount());
           Transaction new_first(new_transaction_first);
           funds_[2].Withdraw(new_first.get_amount());
           funds_[2].StoreTransaction(new_first);
 
           // second transaction
-          Money remainder = transaction.get_amount() - funds_[2].get_amount();
           string new_transaction_second = "W " + to_string(client_id_) +
             "3" + " " + to_string(remainder.Money::get_amount());
           Transaction new_second(new_transaction_second);
@@ -241,46 +270,305 @@ bool Account::Withdraw(Transaction transaction) {
 
         // fund 3
       } else {
-        if (funds_[3].get_amount() + funds_[2].get_amount() <
-            transaction.get_amount()) { // not enough in both
+
+        // not enough in both combined
+        if (funds_[3].get_amount() + funds_[2].get_amount() < amount) {
           transaction.set_original_transaction(
             transaction.get_original_transaction() + "(Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
-        } else { // enough in both
+
+          // enough in both combined
+        } else {
+
+          Money remainder = amount - funds_[3].get_amount();
 
           // first transaction
-          string new_transaction_first = "W " + to_string(client_id_) +
-            "3" + " " + to_string((funds_[3].get_amount()).Money::get_amount());
+          string new_transaction_first = "W " +
+            to_string(transaction.get_client_id()) +
+            "3" +
+            " " +
+            to_string((funds_[3].get_amount()).Money::get_amount());
           Transaction new_first(new_transaction_first);
           funds_[3].Withdraw(new_first.get_amount());
           funds_[3].StoreTransaction(new_first);
 
           // second transaction
-          Money remainder = transaction.get_amount() - funds_[3].get_amount();
           string new_transaction_second = "W " + to_string(client_id_) +
-            "3" + " " + to_string(remainder.Money::get_amount());
+            "2" + " " + to_string(remainder.Money::get_amount());
           Transaction new_second(new_transaction_second);
-          funds_[3].Withdraw(new_second.get_amount());
-          funds_[3].StoreTransaction(new_second);
+          funds_[2].Withdraw(new_second.get_amount());
+          funds_[2].StoreTransaction(new_second);
           return true;
         }
       }
 
     // linked enough
     } else {
-      funds_[transaction.get_fund_id()].Withdraw(transaction.get_amount());
-      funds_[transaction.get_fund_id()].StoreTransaction(transaction);
+      funds_[fund_id].Withdraw(transaction.get_amount());
+      funds_[fund_id].StoreTransaction(transaction);
       return true;
     }
   }
 }
 
-bool Account::Transfer(Transaction transaction) {
-  return false;
+bool Account::Transfer(Transaction transaction, Account* to_account) {
+  int fund_id = transaction.get_fund_id(); // simplify
+  int to_fund_id = transaction.get_to_fund_id();
+  Money amount = transaction.get_amount();
+
+  // non linked withdrawal
+  if ((fund_id != 0) && (fund_id != 1) && (fund_id != 2) && (fund_id != 3)) {
+
+    // non linked not enough funds
+    if (amount > funds_[fund_id].get_amount()) {
+      transaction.set_original_transaction(
+        transaction.get_original_transaction() + "(Failed)");
+      funds_[transaction.get_fund_id()].StoreTransaction(transaction);
+      return false;
+
+      // non linked enough
+    } else {
+
+      // withdraw from here
+      funds_[fund_id].Withdraw(amount);
+      funds_[fund_id].StoreTransaction(transaction);
+      
+      // deposit to here
+      to_account->funds_[to_fund_id].Deposit(amount);
+      to_account->funds_[to_fund_id].StoreTransaction(transaction);
+
+      return true;
+    }
+  } else {
+
+    // linked not enough funds
+    if (amount > funds_[fund_id].get_amount()) {
+
+      // fund 0
+      if (fund_id == 0) {
+
+        // not enough in both combined
+        if (funds_[0].get_amount() + funds_[1].get_amount() < amount) {
+          transaction.set_original_transaction(
+            transaction.get_original_transaction() + "(Failed)");
+          funds_[transaction.get_fund_id()].StoreTransaction(transaction);
+          return false;
+
+          // enough in both combined
+        } else {
+
+          Money remainder = amount - funds_[0].get_amount();
+
+          // first transaction
+          string new_transaction_first = "T " +
+            to_string(transaction.get_client_id()) +
+            "0" +
+            " " +
+            to_string((funds_[0].get_amount()).Money::get_amount()) +
+            to_string(transaction.get_to_client_id()) +
+            to_string(transaction.get_to_fund_id());
+          Transaction new_first(new_transaction_first);
+          funds_[0].Withdraw(new_first.get_amount());
+          funds_[0].StoreTransaction(new_first);
+
+          // second transaction
+          string new_transaction_second = "T " +
+            to_string(client_id_) +
+            "1" +
+            " " +
+            to_string(remainder.Money::get_amount()) +
+            to_string(transaction.get_client_id()) +
+            to_string(transaction.get_to_fund_id());
+          Transaction new_second(new_transaction_second);
+          funds_[1].Withdraw(new_second.get_amount());
+          funds_[1].StoreTransaction(new_second);
+
+          to_account->funds_[transaction.get_to_fund_id()].Deposit(
+            new_first.get_amount());
+          to_account->funds_[transaction.get_to_fund_id()].StoreTransaction(
+            new_first);
+          to_account->funds_[transaction.get_to_fund_id()].Deposit(
+            new_second.get_amount());
+          to_account->funds_[transaction.get_to_fund_id()].StoreTransaction(
+            new_second);
+
+          return true;
+        }
+
+        // fund 1
+      } else if (fund_id == 1) {
+
+        // not enough in both combined
+        if (funds_[1].get_amount() + funds_[0].get_amount() < amount) {
+          transaction.set_original_transaction(
+            transaction.get_original_transaction() + "(Failed)");
+          funds_[transaction.get_fund_id()].StoreTransaction(transaction);
+          return false;
+
+          // enough in both combined
+        } else {
+
+          Money remainder = amount - funds_[1].get_amount();
+
+          // first transaction
+          string new_transaction_first = "T " +
+            to_string(transaction.get_client_id()) +
+            "1" +
+            " " +
+            to_string((funds_[1].get_amount()).Money::get_amount()) +
+            to_string(transaction.get_to_client_id()) +
+            to_string(transaction.get_to_fund_id());
+          Transaction new_first(new_transaction_first);
+          funds_[1].Withdraw(new_first.get_amount());
+          funds_[1].StoreTransaction(new_first);
+
+          // second transaction
+          string new_transaction_second = "T " +
+            to_string(client_id_) +
+            "0" +
+            " " +
+            to_string(remainder.Money::get_amount()) +
+            to_string(transaction.get_client_id()) +
+            to_string(transaction.get_to_fund_id());
+          Transaction new_second(new_transaction_second);
+          funds_[0].Withdraw(new_second.get_amount());
+          funds_[0].StoreTransaction(new_second);
+
+          to_account->funds_[transaction.get_to_fund_id()].Deposit(
+            new_first.get_amount());
+          to_account->funds_[transaction.get_to_fund_id()].StoreTransaction(
+            new_first);
+          to_account->funds_[transaction.get_to_fund_id()].Deposit(
+            new_second.get_amount());
+          to_account->funds_[transaction.get_to_fund_id()].StoreTransaction(
+            new_second);
+
+          return true;
+        }
+
+        // fund 2
+      } else if (fund_id == 2) {
+
+        // not enough in both combined
+        if (funds_[2].get_amount() + funds_[3].get_amount() < amount) {
+          transaction.set_original_transaction(
+            transaction.get_original_transaction() + "(Failed)");
+          funds_[transaction.get_fund_id()].StoreTransaction(transaction);
+          return false;
+
+          // enough in both combined
+        } else {
+
+          Money remainder = amount - funds_[2].get_amount();
+
+          // first transaction
+          string new_transaction_first = "T " +
+            to_string(transaction.get_client_id()) +
+            "2" +
+            " " +
+            to_string((funds_[2].get_amount()).Money::get_amount()) +
+            to_string(transaction.get_to_client_id()) +
+            to_string(transaction.get_to_fund_id());
+          Transaction new_first(new_transaction_first);
+          funds_[2].Withdraw(new_first.get_amount());
+          funds_[2].StoreTransaction(new_first);
+
+          // second transaction
+          string new_transaction_second = "T " +
+            to_string(client_id_) +
+            "3" +
+            " " +
+            to_string(remainder.Money::get_amount()) +
+            to_string(transaction.get_client_id()) +
+            to_string(transaction.get_to_fund_id());
+          Transaction new_second(new_transaction_second);
+          funds_[3].Withdraw(new_second.get_amount());
+          funds_[3].StoreTransaction(new_second);
+
+          to_account->funds_[transaction.get_to_fund_id()].Deposit(
+            new_first.get_amount());
+          to_account->funds_[transaction.get_to_fund_id()].StoreTransaction(
+            new_first);
+          to_account->funds_[transaction.get_to_fund_id()].Deposit(
+            new_second.get_amount());
+          to_account->funds_[transaction.get_to_fund_id()].StoreTransaction(
+            new_second);
+
+          return true;
+        }
+
+        // fund 3
+      } else {
+
+        // not enough in both combined
+        if (funds_[3].get_amount() + funds_[2].get_amount() < amount) {
+          transaction.set_original_transaction(
+            transaction.get_original_transaction() + "(Failed)");
+          funds_[transaction.get_fund_id()].StoreTransaction(transaction);
+          return false;
+
+          // enough in both combined
+        } else {
+
+          Money remainder = amount - funds_[3].get_amount();
+
+          // first transaction
+          string new_transaction_first = "T " +
+            to_string(transaction.get_client_id()) +
+            "3" +
+            " " +
+            to_string((funds_[3].get_amount()).Money::get_amount()) +
+            to_string(transaction.get_to_client_id()) +
+            to_string(transaction.get_to_fund_id());
+          Transaction new_first(new_transaction_first);
+          funds_[3].Withdraw(new_first.get_amount());
+          funds_[3].StoreTransaction(new_first);
+
+          // second transaction
+          string new_transaction_second = "T " +
+            to_string(client_id_) +
+            "2" +
+            " " +
+            to_string(remainder.Money::get_amount()) +
+            to_string(transaction.get_client_id()) +
+            to_string(transaction.get_to_fund_id());
+          Transaction new_second(new_transaction_second);
+          funds_[2].Withdraw(new_second.get_amount());
+          funds_[2].StoreTransaction(new_second);
+
+          to_account->funds_[transaction.get_to_fund_id()].Deposit(
+            new_first.get_amount());
+          to_account->funds_[transaction.get_to_fund_id()].StoreTransaction(
+            new_first);
+          to_account->funds_[transaction.get_to_fund_id()].Deposit(
+            new_second.get_amount());
+          to_account->funds_[transaction.get_to_fund_id()].StoreTransaction(
+            new_second);
+
+          return true;
+        }
+      }
+
+      // linked enough
+    } else {
+
+      // withdraw from here
+      funds_[fund_id].Withdraw(amount);
+      funds_[fund_id].StoreTransaction(transaction);
+
+      // deposit to here
+      to_account->funds_[to_fund_id].Deposit(amount);
+      to_account->funds_[to_fund_id].StoreTransaction(transaction);
+    }
+  }
 }
 
-void Account::PrintHistory(const Transaction& transaction) {}
+void Account::PrintHistory(const Transaction& transaction) {
+  cout << "Transaction History for " << get_client_name() << " ";
+  funds_[transaction.get_fund_id()].PrintHistory();
+}
+
 
 ostream& operator<<(ostream& out, Account rhs) {
   out << rhs.get_client_name() << " Account ID: " << rhs.get_client_id() <<
