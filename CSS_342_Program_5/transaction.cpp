@@ -192,7 +192,7 @@ void Transaction::SetTransaction() {
       to /= 10;
       to_client_id_ = to;
       
-      if ((client_id_ > 9999) || (to_client_id_ > 9999)) { // after strip fund id
+      if ( (client_id_ > 9999) || (to_client_id_ > 9999) ) { // after strip fund id
         valid_ = false;
       } else {
         valid_ = true;
@@ -203,7 +203,6 @@ void Transaction::SetTransaction() {
 
     // defaults
     client_name_ = Name();
-    valid_ = true;
 
   // history type
   } else if (type_ == 'H') {

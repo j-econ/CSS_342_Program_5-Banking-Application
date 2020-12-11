@@ -82,7 +82,7 @@ void Bank::PrintTransactionList() {
 
 void Bank::Process(Transaction transaction) {
   if (transaction.get_valid() == false) { // if transaction has invalid process
-    cerr << "Transaction \"" << transaction << "\" is not valid." <<
+    cerr << "ERROR: Transaction \"" << transaction << "\" is not valid." <<
       " Terminating this transaction." << endl;
   } else {
     char type = transaction.get_type();
@@ -102,7 +102,7 @@ void Bank::Process(Transaction transaction) {
     } else if (type == 'T') {
       if ((transaction.get_client_id() == transaction.get_to_client_id()) &&
           (transaction.get_fund_id() == transaction.get_to_fund_id())) {
-        cerr << "Transaction \"" << transaction << "\" is not valid. " <<
+        cerr << "ERROR: Transaction \"" << transaction << "\" is not valid. " <<
           " Cannot transfer from a fund to itself." << endl;
       } else {
         Transfer(transaction);
@@ -114,7 +114,7 @@ void Bank::Process(Transaction transaction) {
 
       // NOT RECOGNIZED TYPE, FAIL
     } else {
-      cerr << "Transaction '" << transaction << "' is not valid." <<
+      cerr << "ERROR: Transaction '" << transaction << "' is not valid." <<
         " Terminating this transaction." << endl;
     } // end char type logic
   } // end valid_ logic
