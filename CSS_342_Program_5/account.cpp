@@ -29,6 +29,8 @@ Account::Account(const Account& input)
 Account::~Account() {
 }
 
+// getters setters
+
 int Account::get_client_id() const {
   return client_id_;
 }
@@ -92,7 +94,6 @@ void Account::PrintAllFundHistory() const {
   for (unsigned int i = 0; i < funds_.size(); ++i) {
     funds_[i].PrintHistory();
   }
-  cout << "End of Transaction History for " << client_name_ << "." << endl;
 }
 
 // overloads
@@ -117,6 +118,15 @@ void Account::operator=(const Account& rhs) {
   client_id_ = rhs.get_client_id();
   client_name_ = rhs.get_client_name();
   funds_ = rhs.get_funds();
+}
+
+ostream& operator<<(ostream& out, Account rhs) {
+  out << rhs.get_client_name() << " Account ID: " << rhs.get_client_id() <<
+    endl;
+  for (unsigned int i = 0; i < rhs.funds_.size(); ++i) {
+    out << "  " << rhs.funds_[i] << endl;
+  }
+  return out;
 }
 
 //private
@@ -149,7 +159,7 @@ bool Account::Withdraw(Transaction transaction) {
     // non linked not enough
     if (amount > funds_[fund_id].get_amount()) {
       transaction.set_original_transaction(
-        transaction.get_original_transaction() + "(Failed)");
+        transaction.get_original_transaction() + " (Failed)");
       funds_[transaction.get_fund_id()].StoreTransaction(transaction);
       return false;
 
@@ -172,7 +182,7 @@ bool Account::Withdraw(Transaction transaction) {
         // not enough in both combined
         if (funds_[0].get_amount() + funds_[1].get_amount() < amount) {
           transaction.set_original_transaction(
-            transaction.get_original_transaction() + "(Failed)");
+            transaction.get_original_transaction() + " (Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
 
@@ -206,7 +216,7 @@ bool Account::Withdraw(Transaction transaction) {
         // not enough in both combined
         if (funds_[1].get_amount() + funds_[0].get_amount() < amount) {
           transaction.set_original_transaction(
-            transaction.get_original_transaction() + "(Failed)");
+            transaction.get_original_transaction() + " (Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
 
@@ -240,7 +250,7 @@ bool Account::Withdraw(Transaction transaction) {
         // not enough in both combined
         if (funds_[2].get_amount() + funds_[3].get_amount() < amount) {
           transaction.set_original_transaction(
-            transaction.get_original_transaction() + "(Failed)");
+            transaction.get_original_transaction() + " (Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
 
@@ -274,7 +284,7 @@ bool Account::Withdraw(Transaction transaction) {
         // not enough in both combined
         if (funds_[3].get_amount() + funds_[2].get_amount() < amount) {
           transaction.set_original_transaction(
-            transaction.get_original_transaction() + "(Failed)");
+            transaction.get_original_transaction() + " (Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
 
@@ -351,7 +361,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
         // not enough in both combined
         if (funds_[0].get_amount() + funds_[1].get_amount() < amount) {
           transaction.set_original_transaction(
-            transaction.get_original_transaction() + "(Failed)");
+            transaction.get_original_transaction() + " (Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
 
@@ -366,6 +376,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
             "0" +
             " " +
             to_string((funds_[0].get_amount()).Money::get_amount()) +
+            " " +
             to_string(transaction.get_to_client_id()) +
             to_string(transaction.get_to_fund_id());
           Transaction new_first(new_transaction_first);
@@ -378,6 +389,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
             "1" +
             " " +
             to_string(remainder.Money::get_amount()) +
+            " " +
             to_string(transaction.get_client_id()) +
             to_string(transaction.get_to_fund_id());
           Transaction new_second(new_transaction_second);
@@ -402,7 +414,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
         // not enough in both combined
         if (funds_[1].get_amount() + funds_[0].get_amount() < amount) {
           transaction.set_original_transaction(
-            transaction.get_original_transaction() + "(Failed)");
+            transaction.get_original_transaction() + " (Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
 
@@ -417,6 +429,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
             "1" +
             " " +
             to_string((funds_[1].get_amount()).Money::get_amount()) +
+            " " +
             to_string(transaction.get_to_client_id()) +
             to_string(transaction.get_to_fund_id());
           Transaction new_first(new_transaction_first);
@@ -429,6 +442,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
             "0" +
             " " +
             to_string(remainder.Money::get_amount()) +
+            " " +
             to_string(transaction.get_client_id()) +
             to_string(transaction.get_to_fund_id());
           Transaction new_second(new_transaction_second);
@@ -453,7 +467,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
         // not enough in both combined
         if (funds_[2].get_amount() + funds_[3].get_amount() < amount) {
           transaction.set_original_transaction(
-            transaction.get_original_transaction() + "(Failed)");
+            transaction.get_original_transaction() + " (Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
 
@@ -468,6 +482,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
             "2" +
             " " +
             to_string((funds_[2].get_amount()).Money::get_amount()) +
+            " " +
             to_string(transaction.get_to_client_id()) +
             to_string(transaction.get_to_fund_id());
           Transaction new_first(new_transaction_first);
@@ -480,6 +495,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
             "3" +
             " " +
             to_string(remainder.Money::get_amount()) +
+            " " +
             to_string(transaction.get_client_id()) +
             to_string(transaction.get_to_fund_id());
           Transaction new_second(new_transaction_second);
@@ -504,7 +520,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
         // not enough in both combined
         if (funds_[3].get_amount() + funds_[2].get_amount() < amount) {
           transaction.set_original_transaction(
-            transaction.get_original_transaction() + "(Failed)");
+            transaction.get_original_transaction() + " (Failed)");
           funds_[transaction.get_fund_id()].StoreTransaction(transaction);
           return false;
 
@@ -519,6 +535,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
             "3" +
             " " +
             to_string((funds_[3].get_amount()).Money::get_amount()) +
+            " " +
             to_string(transaction.get_to_client_id()) +
             to_string(transaction.get_to_fund_id());
           Transaction new_first(new_transaction_first);
@@ -531,6 +548,7 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
             "2" +
             " " +
             to_string(remainder.Money::get_amount()) +
+            " " +
             to_string(transaction.get_client_id()) +
             to_string(transaction.get_to_fund_id());
           Transaction new_second(new_transaction_second);
@@ -560,6 +578,8 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
       // deposit to here
       to_account->funds_[to_fund_id].Deposit(amount);
       to_account->funds_[to_fund_id].StoreTransaction(transaction);
+      
+      return true;
     }
   }
 }
@@ -567,14 +587,4 @@ bool Account::Transfer(Transaction transaction, Account* to_account) {
 void Account::PrintHistory(const Transaction& transaction) {
   cout << "Transaction History for " << get_client_name() << " ";
   funds_[transaction.get_fund_id()].PrintHistory();
-}
-
-
-ostream& operator<<(ostream& out, Account rhs) {
-  out << rhs.get_client_name() << " Account ID: " << rhs.get_client_id() <<
-    endl;
-  for (unsigned int i = 0; i < rhs.funds_.size(); ++i) {
-    out << "  " << rhs.funds_[i] << endl;
-  }
-  return out;
 }

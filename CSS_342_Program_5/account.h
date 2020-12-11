@@ -1,5 +1,6 @@
 /*
- * @file
+ * @file account.h
+ * header file for account class which represents someones bank account
  *
  * @author Joseph Lan
  * @date 06 December 2020

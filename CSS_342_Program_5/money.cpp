@@ -1,3 +1,13 @@
+/*
+ * @file money.cpp
+ * implementation for money class
+ *
+ * @author Joseph Lan
+ * @date 06 December 2020
+ * CSS 342 B Fall 2020
+ * Prof. Dimpsey
+ */
+
 #include "money.h"
 
 Money::Money() : amount_(0) {}

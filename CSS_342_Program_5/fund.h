@@ -1,5 +1,6 @@
 /*
- * @file
+ * @file fund.h
+ * header file for fund class which represents a single fund within a bank account
  *
  * @author Joseph Lan
  * @date 06 December 2020
@@ -25,9 +26,9 @@ class Fund {
   Fund(int fund_id, string fund_name, Name fund_owner);
 
   // getters-setters
-  Money get_amount();
-  string get_fund_name();
-  int get_fund_id();
+  Money get_amount() const;
+  string get_fund_name() const;
+  int get_fund_id() const;
 
   void set_amount(const Money& input);
 
@@ -38,7 +39,6 @@ class Fund {
   void PrintHistory() const;
 
   // overloads
-
   friend ostream& operator<<(ostream& out, const Fund& rhs);
 
  private:

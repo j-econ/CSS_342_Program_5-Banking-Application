@@ -1,6 +1,7 @@
 /*
  * @file transaction.h
- * header file for transaction class which stores a transaction type
+ * header file for transaction class which represents one instance of a transaction that
+ * can be processed at the bank.
  *
  * @author Joseph Lan
  * @date 06 December 2020
@@ -33,8 +34,11 @@ class Transaction {
   int get_to_client_id() const;
   int get_to_fund_id() const;
   Money get_amount() const;
+  bool get_valid() const;
 
   void set_original_transaction(string transaction);
+
+  // testing
   void set_type(char type);
   void set_client_name(Name name);
   void set_client_id(int client_id);
@@ -42,8 +46,9 @@ class Transaction {
   void set_to_client_id(int to_client_id);
   void set_to_fund_id(int to_fund_id);
   void set_amount(const Money& amount);
+  void set_valid(bool isValid);
 
-  // tester
+  // testing
   void PrintTransaction() const;
 
   // overloads
@@ -61,4 +66,5 @@ class Transaction {
   int to_client_id_;
   int to_fund_id_;
   Money amount_;
+  bool valid_;
 };

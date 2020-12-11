@@ -10,10 +10,10 @@
 #pragma once
 
 #include "account.h"
-#include "fund.h"
 
 using namespace std;
 
+// tree design from assignment + helper methods
 class BSTree {
  public:
   // constructors
@@ -32,8 +32,7 @@ class BSTree {
 
  private:
   struct Node {
-    // initializers for linux c++11 compatibility
-    // passed in nodes
+    // initializers for c++11 compatibility
     Node(Account* acct_in, Node* left_in, Node* right_in)
       : pAcct(acct_in), left(right_in), right(right_in) {}
 

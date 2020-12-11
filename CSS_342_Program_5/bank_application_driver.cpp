@@ -31,17 +31,18 @@ void NameTest();
 void MoneyTest();
 
 int main() {
-  cout << boolalpha << endl;
 
   string filename = "";
-  filename = "C:\\Users\\jecon\\source\\repos\\2020_Fall_CSS342B\\CSS_342_Program_5\\CSS_342_Program_5\\BankTransIn.txt";
+  filename = "BankTransIn.txt";
 
   Bank bank_342(342);
   bank_342.ReadTransactions(filename);
   bank_342.ProcessTransactions();
+  cout << endl;
   bank_342.PrintSummary();
 
-  // Testing methods here
+  //Testing methods here
+  //cout << boolalpha << endl;
   //BankTest(filename);
   //BSTreeTest();
   //AccountTest();
@@ -52,7 +53,6 @@ int main() {
   return 0;
 }
 
-// done
 void BankTest(string filename) {
   cout << "BANK CLASS TESTING BEGIN-----------------------------------" << endl;
   cout << endl;

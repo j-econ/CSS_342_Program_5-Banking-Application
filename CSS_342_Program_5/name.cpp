@@ -34,8 +34,7 @@ void Name::set_name(string first_name, string last_name) {
   last_name_ = last_name;
 }
 
-// operator overloads
-// all relational operators compare alphabetically by last name then first name
+// operator overloads all relational compare alphabetically by last then first name
 
 bool Name::operator<(const Name& rhs) const {
   if (this->last_name_ < rhs.get_last_name()) {

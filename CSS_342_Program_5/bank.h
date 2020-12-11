@@ -27,18 +27,19 @@ class Bank {
   ~Bank();
 
   // getters-setters
-  int get_id();
+  int get_id() const;
 
   // actions
   bool ReadTransactions(string filename);
-  void ProcessTransactions();
-  void PrintSummary() const;
+  void ProcessTransactions(); // process all transactions in the queue
+  void PrintSummary() const; // print summary of all accounts in the bank
 
-  // testers
+  // for testing
   bool AddOneTransaction(Transaction transaction);
   void PrintTransactionList();
 
  private:
+  // no const functions as all functions have the ability to store transaction
   void Process(Transaction transaction);
   void Open(const Transaction& transaction);
   void Deposit(const Transaction& transaction);

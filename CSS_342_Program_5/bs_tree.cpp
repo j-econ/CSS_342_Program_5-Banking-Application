@@ -9,11 +9,15 @@
  */
 #include "bs_tree.h"
 
+// constructors
+
 BSTree::BSTree() : root_(nullptr) {}
 
 BSTree::~BSTree() {
-  Empty();
+  this->Empty();
 }
+
+// actions
 
 bool BSTree::Insert(Account* open) {
 
@@ -47,7 +51,7 @@ bool BSTree::Insert(Account* open) {
     } else {
       current = current->right;
     }
-  }
+  } // current is nullptr here
 
   // current is nullptr, previous is where we came from
   if (insert->pAcct->get_client_id() < previous->pAcct->get_client_id()) {
@@ -108,6 +112,8 @@ bool BSTree::isEmpty() const {
     return false;
   }
 }
+
+// private
 
 void BSTree::DisplayHelper(Node* current) const {
   if (current == nullptr) { // do nothing

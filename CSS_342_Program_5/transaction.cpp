@@ -17,7 +17,8 @@ Transaction::Transaction()
       fund_id_(-1),
       to_client_id_(-1),
       to_fund_id_(-1),
-      amount_(Money()) {}
+      amount_(Money()),
+      valid_(false) {}
 
 Transaction::Transaction(string transaction_string)
   : original_transaction_(transaction_string) {
@@ -32,7 +33,8 @@ Transaction::Transaction(const Transaction& input)
       fund_id_(input.get_fund_id()),
       to_client_id_(input.get_to_client_id()),
       to_fund_id_(input.get_to_fund_id()),
-      amount_(input.get_amount()) {}
+      amount_(input.get_amount()),
+      valid_(input.get_valid()) {}
 
 string Transaction::get_original_transaction() const {
   return original_transaction_;
@@ -64,6 +66,10 @@ int Transaction::get_to_fund_id() const {
 
 Money Transaction::get_amount() const {
   return amount_;
+}
+
+bool Transaction::get_valid() const {
+  return valid_;
 }
 
 // assumes well formatted transaction
@@ -100,6 +106,10 @@ void Transaction::set_amount(const Money& amount) {
   amount_ = amount;
 }
 
+void Transaction::set_valid(bool is_valid) {
+  valid_ = is_valid;
+}
+
 void Transaction::PrintTransaction() const {
   cout << "Original Transaction: " << original_transaction_ << endl;
   cout << "type_: " << type_ << endl;
@@ -125,6 +135,11 @@ void Transaction::SetTransaction() {
     o_t >> burn >> last >> first >> client_id;
     client_name_ = Name(first, last);
     client_id_ = client_id;
+    if (client_id_ < 1000 || client_id_ > 9999) { // account number 4 digits
+      valid_ = false;
+    } else {
+      valid_ = true;
+    }
 
     // defaults
     fund_id_ = -1;
@@ -137,10 +152,20 @@ void Transaction::SetTransaction() {
     int id = 0;
     int value = 0;
     o_t >> burn >> id >> value;
-    fund_id_ = id % 10;
-    id /= 10;
-    client_id_ = id;
     amount_ = Money(value);
+
+    if (id > 9999) { // must be larger than 4 digits to consider
+      fund_id_ = id % 10; // strip the last number
+      id /= 10;
+      client_id_ = id;
+      if (client_id_ > 9999) { // after strippling fund_id
+        valid_ = false;
+      } else {
+        valid_ = true;
+      }
+    } else {
+      valid_ = false;
+    }
 
     // defaults
     client_name_ = Name();
@@ -153,22 +178,44 @@ void Transaction::SetTransaction() {
     int value = 0;
     int to = 0;
     o_t >> burn >> from >> value >> to;
-    fund_id_ = from % 10;
-    from /= 10;
-    client_id_ = from;
-    to_fund_id_ = to % 10;
-    to /= 10;
-    to_client_id_ = to;
     amount_ = Money(value);
+
+    if ((from > 9999) && (to > 9999)) { // must be larger than 4 digits to consider
+
+      // from account
+      fund_id_ = from % 10;
+      from /= 10;
+      client_id_ = from;
+
+      // to account
+      to_fund_id_ = to % 10;
+      to /= 10;
+      to_client_id_ = to;
+      
+      if ((client_id_ > 9999) || (to_client_id_ > 9999)) { // after strip fund id
+        valid_ = false;
+      } else {
+        valid_ = true;
+      }
+    } else {
+      valid_ = false;
+    }
 
     // defaults
     client_name_ = Name();
+    valid_ = true;
 
   // history type
   } else if (type_ == 'H') {
     int client_id = 0;
     int tester = 0;
     o_t >> burn >> client_id;
+
+    if ((client_id < 1000) || (client_id > 99999)) { // not 4 or 5 digits
+      valid_ = false;
+    } else {
+      valid_ = true;
+    }
 
     tester = client_id;
     int count = 0;
@@ -193,13 +240,17 @@ void Transaction::SetTransaction() {
 
   // non recognized transaction defaults
   } else {
-    cerr << "Transaction type '" << type_ << "' is not valid." << endl;
     client_name_ = Name();
     client_id_ = -1;
     fund_id_ = -1;
     to_client_id_ = -1;
     to_fund_id_ = -1;
     amount_ = Money();
+    valid_ = false;
+  }
+
+  if (amount_ < 0) {
+    valid_ = false;
   }
 }
 

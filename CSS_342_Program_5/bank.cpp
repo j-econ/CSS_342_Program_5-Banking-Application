@@ -9,16 +9,25 @@
  */
 #include "bank.h"
 
+// constructors
+
 Bank::Bank() : id_(0) {};
 
 Bank::Bank(int id) : id_(id) {}
 
-Bank::~Bank() {}
-
-int Bank::get_id() {
-  return 0;
+Bank::~Bank() {
+  this->client_accounts_.Empty();
 }
 
+// getters setters
+
+int Bank::get_id() const {
+  return id_;
+}
+
+// actions
+
+// Reads in well-formatted transactions from an input text file
 bool Bank::ReadTransactions(string filename) {
   ifstream inFile;
   inFile.open(filename);
@@ -37,6 +46,7 @@ bool Bank::ReadTransactions(string filename) {
   return true;
 }
 
+// Processes all transactions in queue
 void Bank::ProcessTransactions() {
   int size = transaction_list_.size();
   for (int i = 0; i < size; ++i) {
@@ -46,16 +56,19 @@ void Bank::ProcessTransactions() {
   cout << "Transaction processing complete." << endl;
 }
 
+// Prints out summary of all Accounts in the Bank
 void Bank::PrintSummary() const {
   cout << "Final Balances: " << endl;
   client_accounts_.Display();
 }
 
+// For testing. Adds 1 transaction to queue.
 bool Bank::AddOneTransaction(Transaction transaction) {
   transaction_list_.push(transaction);
   return true;
 }
 
+// For testing. Prints out the transaction list.
 void Bank::PrintTransactionList() {
   int size = transaction_list_.size();
   for (int i = 0; i < size; ++i) {
@@ -65,36 +78,49 @@ void Bank::PrintTransactionList() {
   }
 }
 
+// private
+
 void Bank::Process(Transaction transaction) {
-  char type = transaction.get_type();
-
-  // open account type O
-  if (type == 'O') {
-    Open(transaction);
-
-  } else if (type == 'D') {
-    Deposit(transaction);
-
-  // withdraw type W
-  } else if (type == 'W') {
-    Withdraw(transaction);
-
-  // transfer type T
-  } else if (type == 'T') {
-    Transfer(transaction);
-
-  // history type T
-  } else if (type == 'H') {
-    PrintHistory(transaction);
-
-  // NOT RECOGNIZED TYPE, FAIL
+  if (transaction.get_valid() == false) { // if transaction has invalid process
+    cerr << "Transaction \"" << transaction << "\" is not valid." <<
+      " Terminating this transaction." << endl;
   } else {
-    cerr << "Transaction type: '" << type << "' is invalid. Terminate " <<
-      "transaction \"" << transaction << "\"" << endl;
-  }
+    char type = transaction.get_type();
+
+    // open account type O
+    if (type == 'O') {
+      Open(transaction);
+
+    } else if (type == 'D') {
+      Deposit(transaction);
+
+      // withdraw type W
+    } else if (type == 'W') {
+      Withdraw(transaction);
+
+      // transfer type T
+    } else if (type == 'T') {
+      if ((transaction.get_client_id() == transaction.get_to_client_id()) &&
+          (transaction.get_fund_id() == transaction.get_to_fund_id())) {
+        cerr << "Transaction \"" << transaction << "\" is not valid. " <<
+          " Cannot transfer from a fund to itself." << endl;
+      } else {
+        Transfer(transaction);
+      }
+
+      // history type T
+    } else if (type == 'H') {
+      PrintHistory(transaction);
+
+      // NOT RECOGNIZED TYPE, FAIL
+    } else {
+      cerr << "Transaction '" << transaction << "' is not valid." <<
+        " Terminating this transaction." << endl;
+    } // end char type logic
+  } // end valid_ logic
 }
 
-// dynamic memory here
+// Dynamic memory allocation here
 void Bank::Open(const Transaction& transaction) {
 
   // open dynamic memory
@@ -102,7 +128,7 @@ void Bank::Open(const Transaction& transaction) {
     new Account(transaction.get_client_id(), transaction.get_client_name());
 
   // if fail, delete dynamic memory
-  if (client_accounts_.Insert(open)) {
+  if (this->client_accounts_.Insert(open)) {
     return;
   } else {
     delete open;
