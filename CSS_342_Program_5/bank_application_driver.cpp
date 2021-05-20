@@ -33,7 +33,7 @@ void MoneyTest();
 int main() {
 
   string filename = "";
-  filename = "BankTransTest2.txt";
+  filename = "BankTransIn.txt";
 
   Bank bank_342(342);
   bank_342.ReadTransactions(filename);
